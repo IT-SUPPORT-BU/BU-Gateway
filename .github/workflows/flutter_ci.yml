@@ -1,4 +1,4 @@
-name: Flutter CI
+name: Flutter CI/CD
 
 on:
   push:
@@ -7,10 +7,10 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  build:
-    name: Analyze & Build
+  # Job 1: Quality Assurance
+  analyze-and-test:
+    name: 🔍 Analyze & Test
     runs-on: ubuntu-latest
-
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -22,31 +22,94 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: 📦 Install dependencies
+      # Explicitly cache pub packages to drastically cut down download times
+      - name: 📦 Cache Pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: 📥 Install dependencies
         run: flutter pub get
+
+      - name: ✨ Check formatting
+        run: dart format --output=none --set-exit-if-changed .
 
       - name: 🔍 Analyze code
         run: flutter analyze
 
-      - name: 🧪 Run tests
-        run: flutter test
+      - name: 🧪 Run tests with coverage
+        run: flutter test --coverage
 
-      - name: 🌐 Build Web
-        run: flutter build web --release
+  # Job 2: Release Web
+  build-web:
+    name: 🌐 Build Web
+    needs: analyze-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' # Only build release artifacts on actual merges/pushes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
 
-      - name: 🤖 Build Android APK
-        run: flutter build apk --release --split-per-abi
+      - run: flutter pub get
 
-      - name: 📤 Upload Web Build Artifact
+      # Injects the GitHub run number as the build version
+      - name: 🏗️ Build Web Release
+        run: flutter build web --release --build-number=${{ github.run_number }}
+
+      - name: 📤 Upload Web Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: web-build
+          name: web-release-build
           path: build/web/
           retention-days: 7
 
-      - name: 📤 Upload APK Artifact
+  # Job 3: Release Android (Signed)
+  build-android:
+    name: 🤖 Build Android (Signed)
+    needs: analyze-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ☕ Setup Java (Required for Android Signing)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      - run: flutter pub get
+
+      # Decrypts your signing keystore securely on the fly
+      - name: 🔑 Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.keystore
+
+      # Builds a secure, signed production APK split per architecture
+      - name: 🏗️ Build Signed Android APKs
+        run: flutter build apk --release --split-per-abi --build-number=${{ github.run_number }}
+        env:
+          KEYSTORE_FILE: release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: 📤 Upload Signed APKs
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
+          name: android-signed-apks
           path: build/app/outputs/flutter-apk/
           retention-days: 7
