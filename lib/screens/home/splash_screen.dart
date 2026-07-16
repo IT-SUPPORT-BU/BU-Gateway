@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
+import '../../helpers/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -23,6 +24,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -46,9 +49,9 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 32),
               // University Application Branding Labels
-              const Text(
-                'BU Gateway',
-                style: TextStyle(
+              Text(
+                loc.appTitle,
+                style: const TextStyle(
                   color: BUColors.primaryBlue,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -56,10 +59,10 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Bugema University Companion Portal',
+              Text(
+                loc.bugemaCompanion,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.black54,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,

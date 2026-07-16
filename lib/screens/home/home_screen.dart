@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../../constants/links.dart';
-import '../../constants/strings.dart';
+import '../../helpers/app_localizations.dart';
+import '../../helpers/settings_controller.dart';
 import '../../widgets/category_header.dart';
 import '../../widgets/link_card.dart';
 
 class HomeScreen extends StatefulWidget {
-  final VoidCallback onToggleTheme;
-  final bool isDark;
-
-  const HomeScreen({
-    super.key,
-    required this.onToggleTheme,
-    required this.isDark,
-  });
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -48,6 +42,10 @@ class _HomeScreenState extends State<HomeScreen> {
       groupedLinks.putIfAbsent(link.category, () => []).add(link);
     }
 
+    final settings = SettingsProvider.of(context);
+    final loc = AppLocalizations.of(context);
+    final isDark = settings.isDarkMode;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -57,11 +55,11 @@ class _HomeScreenState extends State<HomeScreen> {
             floating: false,
             pinned: true,
             stretch: true,
-            backgroundColor: widget.isDark ? BUColors.cardDark : BUColors.primaryBlue,
+            backgroundColor: isDark ? BUColors.cardDark : BUColors.primaryBlue,
             // Removed the logo beside the BU Gateway title at the very top
-            title: const Text(
-              BUStrings.appTitle,
-              style: TextStyle(
+            title: Text(
+              loc.appTitle,
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
                 color: Colors.white,
@@ -70,12 +68,17 @@ class _HomeScreenState extends State<HomeScreen> {
             centerTitle: true,
             actions: [
               IconButton(
+                icon: const Icon(Icons.settings_rounded, color: Colors.white),
+                onPressed: () => Navigator.pushNamed(context, '/settings'),
+                tooltip: loc.settingsTitle,
+              ),
+              IconButton(
                 icon: Icon(
-                  widget.isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                   color: Colors.white,
                 ),
-                onPressed: widget.onToggleTheme,
-                tooltip: 'Toggle Theme',
+                onPressed: () => settings.updateDarkMode(!isDark),
+                tooltip: loc.toggleThemeTooltip,
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
@@ -86,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: widget.isDark
+                        colors: isDark
                             ? [const Color(0xFF0F1E36), BUColors.backgroundDark]
                             : [BUColors.primaryBlue, const Color(0xFF1565C0)],
                         begin: Alignment.topLeft,
@@ -153,9 +156,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 8),
                           // Removed the welcome to bu gateway statement text
-                          const Text(
-                            BUStrings.slogan,
-                            style: TextStyle(
+                          Text(
+                            loc.slogan,
+                            style: const TextStyle(
                               fontSize: 12,
                               fontStyle: FontStyle.italic,
                               color: Colors.white70,
@@ -177,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   height: 48,
                   decoration: BoxDecoration(
-                    color: widget.isDark ? BUColors.backgroundDark : Colors.white,
+                    color: isDark ? BUColors.backgroundDark : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
@@ -195,14 +198,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                     },
                     decoration: InputDecoration(
-                      hintText: BUStrings.searchPlaceholder,
+                      hintText: loc.searchPlaceholder,
                       hintStyle: TextStyle(
-                        color: widget.isDark ? Colors.grey[500] : Colors.grey[400],
+                        color: isDark ? Colors.grey[500] : Colors.grey[400],
                         fontSize: 14,
                       ),
                       prefixIcon: Icon(
                         Icons.search_rounded,
-                        color: widget.isDark ? BUColors.secondaryGold : BUColors.primaryBlue,
+                        color: isDark ? BUColors.secondaryGold : BUColors.primaryBlue,
                       ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
@@ -238,16 +241,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icon(
                         Icons.search_off_rounded,
                         size: 64,
-                        color: widget.isDark ? Colors.grey[700] : Colors.grey[300],
+                        color: isDark ? Colors.grey[700] : Colors.grey[300],
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        BUStrings.noResults,
+                        loc.noResults,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
-                          color: widget.isDark ? Colors.grey[400] : Colors.grey[600],
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
                         ),
                       ),
                     ],
@@ -304,19 +307,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const Divider(indent: 32, endIndent: 32),
                   const SizedBox(height: 12),
-                  const Text(
-                    BUStrings.slogan,
-                    style: TextStyle(
+                  Text(
+                    loc.slogan,
+                    style: const TextStyle(
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
                       color: Colors.grey,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    BUStrings.footerCopyright,
+                  Text(
+                    loc.footerCopyright,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 11,
                       color: Colors.grey,
                     ),
