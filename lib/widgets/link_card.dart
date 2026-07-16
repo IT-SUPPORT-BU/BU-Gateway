@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../constants/colors.dart';
 import '../constants/links.dart';
+import '../webview_screen.dart';
 
 class LinkCard extends StatefulWidget {
   final LinkItem linkItem;
-  
+
   const LinkCard({super.key, required this.linkItem});
 
   @override
@@ -23,7 +23,7 @@ class _LinkCardState extends State<LinkCard> with SingleTickerProviderStateMixin
     _controller = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
-    );
+    ); // AnimationController
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
@@ -35,30 +35,22 @@ class _LinkCardState extends State<LinkCard> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
-  Future<void> _launchUrl() async {
-    final Uri uri = Uri.parse(widget.linkItem.url);
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        throw 'Could not launch ${widget.linkItem.url}';
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not open portal: ${widget.linkItem.title}'),
-            backgroundColor: BUColors.primaryBlue,
-          ),
-        );
-      }
-    }
+  void _openLink() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WebViewScreen(
+          title: widget.linkItem.title,
+          url: widget.linkItem.url,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -66,7 +58,7 @@ class _LinkCardState extends State<LinkCard> with SingleTickerProviderStateMixin
         onTapDown: (_) => _controller.forward(),
         onTapUp: (_) {
           _controller.reverse();
-          _launchUrl();
+          _openLink();
         },
         onTapCancel: () => _controller.reverse(),
         child: ScaleTransition(
@@ -79,20 +71,21 @@ class _LinkCardState extends State<LinkCard> with SingleTickerProviderStateMixin
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _isHovered
-                    ? (isDark ? BUColors.secondaryGold : BUColors.primaryBlue).withValues(alpha: 0.5)
+                    ? (isDark ? BUColors.secondaryGold : BUColors.primaryBlue)
                     : Colors.transparent,
                 width: 1.5,
-              ),
+              ), // Border.all
               boxShadow: [
                 BoxShadow(
                   color: _isHovered
-                      ? (isDark ? BUColors.secondaryGold : BUColors.primaryBlue).withValues(alpha: 0.1)
+                      ? (isDark ? BUColors.secondaryGold : BUColors.primaryBlue)
+                          .withValues(alpha: 0.04)
                       : Colors.black.withValues(alpha: 0.04),
                   blurRadius: _isHovered ? 12 : 8,
                   offset: const Offset(0, 4),
-                ),
+                ), // BoxShadow
               ],
-            ),
+            ), // BoxDecoration
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -110,17 +103,17 @@ class _LinkCardState extends State<LinkCard> with SingleTickerProviderStateMixin
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                      ),
+                      ), // LinearGradient
                       borderRadius: BorderRadius.circular(12),
-                    ),
+                    ), // BoxDecoration
                     alignment: Alignment.center,
                     child: Text(
                       widget.linkItem.iconEmoji,
                       style: const TextStyle(fontSize: 24),
-                    ),
-                  ),
+                    ), // Text
+                  ), // Container
                   const SizedBox(width: 16),
-                  
+
                   // Text Content
                   Expanded(
                     child: Column(
@@ -129,22 +122,22 @@ class _LinkCardState extends State<LinkCard> with SingleTickerProviderStateMixin
                         Text(
                           widget.linkItem.title,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : BUColors.textLightPrimary,
-                          ),
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : BUColors.textLightPrimary,
+                              ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           widget.linkItem.description,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: isDark ? BUColors.textDarkSecondary : BUColors.textLightSecondary,
-                            fontSize: 13,
-                          ),
+                                color: isDark ? BUColors.textDarkSecondary : BUColors.textLightSecondary,
+                                fontSize: 13,
+                              ),
                         ),
                       ],
                     ),
                   ),
-                  
+
                   // Trailing Launch Icon
                   Container(
                     margin: const EdgeInsets.only(top: 4),
@@ -154,14 +147,14 @@ class _LinkCardState extends State<LinkCard> with SingleTickerProviderStateMixin
                       color: isDark
                           ? BUColors.secondaryGold.withValues(alpha: 0.8)
                           : BUColors.primaryBlue.withValues(alpha: 0.6),
-                    ),
-                  ),
+                    ), // Icon
+                  ), // Container
                 ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+              ), // Row
+            ), // Padding
+          ), // AnimatedContainer
+        ), // ScaleTransition
+      ), // GestureDetector
+    ); // MouseRegion
   }
 }
